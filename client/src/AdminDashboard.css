@@ -1,0 +1,149 @@
+/* General Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f8f9fa;
+}
+
+/* Admin Dashboard Container */
+.admin-dashboard {
+    padding: 20px;
+}
+
+/* Apply violet gradient only to Admin Dashboard h2 */
+.admin-dashboard h2 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(to right, #673AB7, #512DA8);
+    padding: 15px;
+    text-align: center;
+    border-radius: 10px;
+}
+
+/* General h2 styles for other pages (without violet gradient) */
+h2 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    color: black;
+    background: none;
+    padding: 10px;
+    text-align: center;
+}
+
+/* Tabs Section */
+.tabs {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+/* Tab Buttons */
+.tab-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+/* Pending Items (Red) */
+.pending {
+    background: #D32F2F;
+}
+
+.pending:hover {
+    background: #B71C1C;
+}
+
+/* Approved Lost Items (Blue) */
+.approved-lost {
+    background: #1976D2;
+}
+
+.approved-lost:hover {
+    background: #0D47A1;
+}
+
+/* Approved Found Items (Green) */
+.approved-found {
+    background: #388E3C;
+}
+
+.approved-found:hover {
+    background: #1B5E20;
+}
+
+/* Active Tab Highlight */
+.active-tab {
+    border-bottom: 3px solid #ffffff;
+    opacity: 1;
+}
+
+/* Table Styles */
+.table-container {
+    margin-top: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: #4CAF50;
+    color: white;
+    font-weight: bold;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Buttons for Approve & Reject */
+.approve-btn {
+    background: #4CAF50;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.reject-btn {
+    background: #f44336;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.approve-btn:hover {
+    background: #45a049;
+}
+
+.reject-btn:hover {
+    background: #d32f2f;
+}
+
+/* Status Styling */
+.status {
+    font-weight: bold;
+    text-transform: capitalize;
+}

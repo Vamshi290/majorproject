@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "framer-motion": "^12.4.7",
+    "mongodb": "^6.12.0"
+  }
+}

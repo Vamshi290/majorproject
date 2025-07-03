@@ -1,0 +1,26 @@
+.bg-white {
+  background: #fff !important;
+}
+.p-4 {
+  padding: 2rem !important;
+}
+.rounded {
+  border-radius: 1rem !important;
+}
+.w-25 {
+  width: 350px !important;
+  min-width: 300px;
+}
+.form-control {
+  margin-bottom: 1rem;
+}
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+}
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+.alert {
+  margin-top: 1rem;
+}
