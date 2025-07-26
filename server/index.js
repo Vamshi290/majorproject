@@ -7,7 +7,8 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const session = require('express-session');
-const EmployeeModel = require('./models/Employee');
+const Admin = require('./models/Admin');
+
 const LostFoundItemsModel = require("./models/LostFoundItems");
 const LostItemModel = require("./models/LostItem");
 const FoundItemModel = require("./models/FoundItem");
@@ -18,121 +19,98 @@ const Student = require('./models/Student');
 const app = express();
 
 // Middleware
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+// CORS setup
 app.use(cors({
-  origin: 'http://localhost:5173', // Ensure this matches your frontend's URL
-  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'], // Add 'PATCH' here
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Middleware to parse JSON bodies
+// JSON parsing
 app.use(express.json());
 
-app.use(cors());
+// Session setup
+app.use(session({
+  secret: process.env.JWT_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false },
+}));
+
+// Multer configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) return cb(null, true);
+    cb(new Error("Only image files (jpg, jpeg, png) are allowed"));
+  },
+});
+
+// Serve uploaded files
+app.use('/uploads', express.static(uploadDir));
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI || " ")
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Session setup
-app.use(session({
-  secret: process.env.JWT_SECRET || 'your-secret-key',  // Secret key from .env
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false }, // Set secure: true for production with HTTPS
-}));
 
 // Admin role authorization middleware using session
 const verifyAdmin = (req, res, next) => {
-  if (req.session.user && req.session.user.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Forbidden' });
-  }
+  if (req.session.user && req.session.user.role === 'admin') next();
+  else res.status(403).json({ message: 'Forbidden' });
 };
 
-// Middleware to verify session
 const verifySession = (req, res, next) => {
-  console.log('Session info:', req.session);  // Debugging: Log session information
-  if (req.session.user) {
-    next();
-  } else {
-    res.status(403).json({ message: 'Access denied' });
-  }
+  if (req.session.user) next();
+  else res.status(403).json({ message: 'Access denied' });
 };
 
-// Routes for login and registration
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
+// Authentication routes are handled by authRoutes.js
+app.post("/student/register", upload.single("idCardPhoto"), async (req, res) => {
   try {
-    const user = await EmployeeModel.findOne({ email });
-    if (user) {
-      const match = await bcrypt.compare(password, user.password);
-      if (match) {
-        req.session.user = { userId: user._id, role: user.role }; // Store user info in session
-        return res.json({ message: "Success" });
-      } else {
-        return res.status(401).json({ message: "Invalid password" });
-      }
-    }
-    return res.status(404).json({ message: "No record found" });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Internal Server Error", error: err });
-  }
-});
+    const { name, year, branch, rollNo, contact, email, agree, password } = req.body;
+    const idCardPhoto = req.file ? req.file.path : null;
 
-app.post('/register', async (req, res) => {
-  const { email, password, name, role } = req.body;
-
-  try {
-    const existingUser = await EmployeeModel.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email is already registered." });
+    if (!name || !year || !branch || !rollNo || !contact || !email || !password || !agree || !idCardPhoto) {
+      return res.status(400).json({ message: "All fields are required." });
     }
+
+    const existingStudent = await Student.findOne({ rollNo: rollNo.trim() });
+    if (existingStudent) return res.status(400).json({ message: "Roll number already registered." });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newEmployee = new EmployeeModel({ email, password: hashedPassword, name, role });
-    const savedEmployee = await newEmployee.save();
-    res.status(201).json(savedEmployee);
+    const student = new Student({
+      name: name.trim(),
+      year,
+      branch: branch.trim(),
+      rollNo: rollNo.trim(),
+      contact: contact.trim(),
+      email: email.trim(),
+      password: hashedPassword,
+      idCardPhoto,
+      agree: agree === "true" || agree === true,
+    });
+    await student.save();
+    res.status(201).json({ message: "Student registered successfully!" });
   } catch (err) {
-    console.error("Database error:", err);
-    res.status(500).json({ message: "Error saving to database", error: err });
+    res.status(400).json({ message: err.message });
   }
 });
 
-// Ensure the uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir); // Create the 'uploads' folder if it doesn't exist
-}
+// Admin routes are handled by authRoutes.js
 
-// Set up multer storage engine (store files in the 'uploads' folder)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Set file size limit (5MB)
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (extname && mimetype) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only image files (jpg, jpeg, png) are allowed'));
-    }
-  },
-});
-
-// Serve uploaded images from the 'uploads' directory
-app.use('/uploads', express.static(uploadDir));
 
 // Use LostFound and authRoutes middleware
 app.use(LostFound);
@@ -401,52 +379,4 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-async function sendMailWithEthereal(to, subject, html) {
-  let testAccount = await nodemailer.createTestAccount();
-  let transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: testAccount.user,
-      pass: testAccount.pass,
-    },
-  });
 
-  let info = await transporter.sendMail({
-    from: '"Test" <test@example.com>',
-    to,
-    subject,
-    html,
-  });
-
-  console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-}
-
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded" : "Not loaded");
-
-app.post("/student/register", upload.single("idCard"), async (req, res) => {
-  try {
-    const { name, year, branch, rollNo, contact, email, agree } = req.body;
-    const idCardPhoto = req.file ? req.file.path : null;
-
-    if (!idCardPhoto) {
-      return res.status(400).json({ message: "ID card photo is required." });
-    }
-
-    const student = new Student({
-      name,
-      year,
-      branch,
-      rollNo,
-      contact,
-      email,
-      idCardPhoto,
-      agree: agree === "true" || agree === true
-    });
-
-    await student.save();
-    res.status(201).json({ message: "Student registered successfully!" });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});

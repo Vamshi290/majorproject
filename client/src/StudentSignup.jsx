@@ -12,8 +12,10 @@ function StudentSignup() {
     password: "",
     agree: false,
   });
+
   const [idCard, setIdCard] = useState(null);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -24,35 +26,66 @@ function StudentSignup() {
   };
 
   const handleFileChange = (e) => {
-    setIdCard(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file && !["image/jpeg", "image/jpg"].includes(file.type)) {
+      setError("Only JPG/JPEG images are allowed.");
+      setIdCard(null);
+      return;
+    }
+    setError("");
+    setIdCard(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!form.agree) {
-      setMessage("You must agree to the terms.");
+      setError("You must agree to the terms.");
       return;
     }
+
+    if (!idCard) {
+      setError("Please upload your ID card photo.");
+      return;
+    }
+
     const data = new FormData();
-    Object.entries(form).forEach(([key, value]) => data.append(key, value));
-    if (idCard) data.append("idCardPhoto", idCard);
+    Object.entries(form).forEach(([key, value]) => {
+      data.append(key, value);
+    });
+    data.append("idCardPhoto", idCard); // Must match backend
 
     try {
       const res = await axios.post("http://localhost:3001/student/register", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setMessage("Registration successful!");
+
+      setMessage("🎉 Registration successful!");
+      setError("");
+      setForm({
+        name: "",
+        year: "",
+        branch: "",
+        rollNo: "",
+        contact: "",
+        email: "",
+        password: "",
+        agree: false,
+      });
+      setIdCard(null);
     } catch (err) {
-      setMessage(err.response?.data?.message || "Something went wrong.");
+      setMessage("");
+      setError(err.response?.data?.message || "Something went wrong.");
     }
   };
 
   return (
     <div className="d-flex justify-content-center align-items-center bg-secondary vh-100">
-      <div className="bg-white p-4 rounded w-25">
+      <div className="bg-white p-4 rounded w-50 shadow">
         <h2 className="text-center mb-4">Student Sign Up</h2>
+
         <form onSubmit={handleSubmit} encType="multipart/form-data">
-          <div className="mb-2">
+          <div className="mb-3">
             <label>Name</label>
             <input
               type="text"
@@ -63,7 +96,8 @@ function StudentSignup() {
               required
             />
           </div>
-          <div className="mb-2">
+
+          <div className="mb-3">
             <label>Year</label>
             <select
               className="form-control"
@@ -79,7 +113,8 @@ function StudentSignup() {
               <option value="4th">4th</option>
             </select>
           </div>
-          <div className="mb-2">
+
+          <div className="mb-3">
             <label>Branch</label>
             <input
               type="text"
@@ -90,7 +125,8 @@ function StudentSignup() {
               required
             />
           </div>
-          <div className="mb-2">
+
+          <div className="mb-3">
             <label>Roll No.</label>
             <input
               type="text"
@@ -101,7 +137,8 @@ function StudentSignup() {
               required
             />
           </div>
-          <div className="mb-2">
+
+          <div className="mb-3">
             <label>Contact Number</label>
             <input
               type="tel"
@@ -114,7 +151,8 @@ function StudentSignup() {
               maxLength={10}
             />
           </div>
-          <div className="mb-2">
+
+          <div className="mb-3">
             <label>College Email ID</label>
             <input
               type="email"
@@ -125,7 +163,8 @@ function StudentSignup() {
               required
             />
           </div>
-          <div className="mb-2">
+
+          <div className="mb-3">
             <label>Password</label>
             <input
               type="password"
@@ -136,17 +175,19 @@ function StudentSignup() {
               required
             />
           </div>
-          <div className="mb-2">
-            <label>ID Card Photo (jpg only)</label>
+
+          <div className="mb-3">
+            <label>ID Card Photo (JPG/JPEG only)</label>
             <input
               type="file"
               className="form-control"
-              accept=".jpg"
+              accept=".jpg,.jpeg"
               onChange={handleFileChange}
               required
             />
           </div>
-          <div className="form-check mb-2">
+
+          <div className="form-check mb-3">
             <input
               className="form-check-input"
               type="checkbox"
@@ -160,11 +201,14 @@ function StudentSignup() {
               I agree to the terms and conditions
             </label>
           </div>
+
           <button type="submit" className="btn btn-primary w-100">
             Register
           </button>
         </form>
-        {message && <div className="alert alert-info mt-3">{message}</div>}
+
+        {message && <div className="alert alert-success mt-3 text-center">{message}</div>}
+        {error && <div className="alert alert-danger mt-3 text-center">{error}</div>}
       </div>
     </div>
   );

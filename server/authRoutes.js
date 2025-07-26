@@ -1,16 +1,17 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const EmployeeModel = require('./models/Employee');
-const User = require('./models/User');
 const router = express.Router();
+const nodemailer = require('nodemailer');
+const multer = require('multer');
+
+const Student = require('./models/Student');
+const Admin = require('./models/Admin');
+
 const JWT_SECRET = process.env.JWT_SECRET || 'yoursecret';
 const otpStore = {};
-const nodemailer = require('nodemailer');
-const Student = require('./models/Student');
-const multer = require('multer');
-const Employee = require('./models/Employee');
 
+// ✅ Nodemailer configuration
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -19,132 +20,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Set up multer for file uploads
+// ✅ Multer setup
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
 });
 const upload = multer({ storage });
 
-// Login Route
-router.post('/login', async (req, res) => {
-  const { email, password, role } = req.body;
-  try {
-    const user = await EmployeeModel.findOne({ email, role }); // Check both email and role
-    if (!user) return res.status(404).json({ message: "No record found" });
+// Employee routes removed - using Admin and Student models instead
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ message: "Invalid password" });
+// Password reset routes removed - can be added back if needed for Admin/Student
 
-    // Issue JWT with role (optional, for future)
-    const token = "dummy-token"; // or use JWT if you want
-    res.json({ message: "Success", token, role: user.role });
-  } catch (err) {
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-});
-
-// Register Route
-router.post('/register', async (req, res) => {
-  console.log("Registering:", req.body);
-  const { email, password, name, role } = req.body;
-
-  try {
-    const existingUser = await EmployeeModel.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email is already registered." });
-    }
-
-    bcrypt.hash(password, 3, async (err, hashedPassword) => {
-      if (err) {
-        console.error("Error hashing password:", err);
-        return res.status(500).json({ message: "Internal Server Error", error: err });
-      }
-
-      const newEmployee = new EmployeeModel({ email, password: hashedPassword, name, role });
-      await newEmployee.save();
-      res.status(201).json(newEmployee);
-    });
-  } catch (err) {
-    console.error("Database error:", err);
-    res.status(500).json({ message: "Database error", error: err });
-  }
-});
-
-// Forgot Password - Send Reset Link
-router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
-  try {
-    const user = await EmployeeModel.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Generate a reset token valid for 15 minutes
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
-
-    // Construct reset link
-    const resetLink = `http://localhost:5173/reset-password/${token}`;
-
-    // Send email using Outlook/Hotmail
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Password Reset Link',
-      html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link is valid for 15 minutes.</p>`
-    });
-
-    res.json({ message: 'Password reset link sent to your email.' });
-  } catch (err) {
-    console.error("Error sending reset link:", err);
-    res.status(500).json({ message: 'Error sending reset link' });
-  }
-});
-
-// Verify OTP
-router.post('/verify-otp', async (req, res) => {
-  const { email, otp } = req.body;
-  const record = otpStore[email];
-
-  if (!record) return res.status(400).json({ message: 'OTP not requested' });
-  if (Date.now() > record.expiresAt) return res.status(400).json({ message: 'OTP expired' });
-  if (otp !== record.otp) return res.status(400).json({ message: 'Invalid OTP' });
-
-  // Issue temporary token after successful OTP verification
-  const user = await EmployeeModel.findOne({ email });
-  const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '10m' });
-
-  // Invalidate OTP
-  delete otpStore[email];
-
-  res.json({ message: 'OTP verified successfully', token });
-});
-
-// Reset Password
-router.post('/reset-password', async (req, res) => {
-  const { token, newPassword } = req.body;
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await EmployeeModel.findById(decoded.userId);
-
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
-
-    res.json({ message: 'Password updated successfully' });
-  } catch (err) {
-    res.status(400).json({ message: 'Invalid or expired token' });
-  }
-});
-
-// Student registration route
+// ✅ Student Registration with Image Upload
 router.post("/student/register", upload.single("idCardPhoto"), async (req, res) => {
   try {
     const { name, year, branch, rollNo, contact, email, password, agree } = req.body;
-    if (!req.file) return res.status(400).json({ message: "ID card photo required" });
 
-    // Hash the password
+    if (!req.file) return res.status(400).json({ message: "ID card photo is required." });
+    if (!rollNo || rollNo.trim() === "") return res.status(400).json({ message: "Roll number is required." });
+
+    const existing = await Student.findOne({ rollNo });
+    if (existing) return res.status(400).json({ message: "Roll number already registered." });
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const student = new Student({
@@ -158,56 +55,104 @@ router.post("/student/register", upload.single("idCardPhoto"), async (req, res) 
       agree,
       idCardPhoto: req.file.filename,
     });
+
     await student.save();
-    res.status(201).json({ message: "Student registered successfully" });
+    res.status(201).json({ message: "Student registered successfully." });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("🚨 Error in /student/register:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 });
 
-// Student login route
-router.post("/student/login", async (req, res) => {
+// ✅ Student Login
+router.post('/login/student', async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Only look for students!
     const student = await Student.findOne({ email });
-    if (!student) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (!student) return res.status(404).json({ message: 'No student record found' });
+
     const isMatch = await bcrypt.compare(password, student.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-    // ...generate token or session...
-    res.json({ message: "Login successful", student });
+    if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
+
+    res.status(200).json({ message: 'Student login successful', userType: 'student', userId: student._id });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Admin login route
-router.post("/admin/login", async (req, res) => {
+// ✅ Admin Registration
+router.post('/signup/admin', async (req, res) => {
+  const { name, email, password } = req.body;
+
+  try {
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    const adminExists = await Admin.findOne({ email });
+    const studentExists = await Student.findOne({ email });
+
+    if (adminExists || studentExists) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newAdmin = new Admin({ name, email, password: hashedPassword });
+
+    await newAdmin.save();
+    res.status(201).json({ message: 'Admin registered successfully' });
+
+  } catch (err) {
+    console.error("🚨 Admin registration error:", err); // print full error stack
+    res.status(500).json({ message: 'Admin registration error', error: err.message });
+  }
+});
+
+
+// ✅ Admin Login
+router.post('/login/admin', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const admin = await Admin.findOne({ email });
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid password' });
+
+    res.status(200).json({
+      message: 'Admin login successful',
+      userType: 'admin',
+      userId: admin._id,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// ✅ Student Signup (just email & password)
+router.post('/signup/student', async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Only look for admins!
-    const admin = await Employee.findOne({ email });
-    if (!admin) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-    // ...generate token or session...
-    res.json({ message: "Login successful", admin });
+    const studentExists = await Student.findOne({ email });
+    const adminExists = await Admin.findOne({ username: email });
+
+    if (studentExists || adminExists) return res.status(400).json({ message: 'Email already exists' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newStudent = new Student({ email, password: hashedPassword });
+    await newStudent.save();
+
+    res.status(201).json({ message: 'Student registered successfully' });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: 'Student registration error' });
   }
 });
 
+// Optional Middleware for Role-Based Access
 function requireRole(role) {
   return (req, res, next) => {
-    // Assuming you set req.user in your auth middleware
     if (req.user && req.user.role === role) {
       next();
     } else {
