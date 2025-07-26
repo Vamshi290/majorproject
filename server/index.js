@@ -24,7 +24,7 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
 // CORS setup
 app.use(cors({
-  origin: ['http://localhost:5173','https://majorproject1-pi.vercel.app'],
+  origin: ['http://localhost:5173','https://majorproject2-one.vercel.app'],
 
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
