@@ -56,7 +56,7 @@ function StudentSignup() {
     data.append("idCardPhoto", idCard); // Must match backend
 
     try {
-      const res = await axios.post("http://localhost:3001/student/register", data, {
+      const res = await axios.post("https://majorproject-kr7t.onrender.com/student/register", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

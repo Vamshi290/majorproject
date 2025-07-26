@@ -13,7 +13,7 @@ function ItemList({ items, error, itemType }) {
                         <div className="col-md-4 mb-3" key={index}>
                             <div className="card">
                                 <img 
-                                    src={`http://127.0.0.1:3001/${item.image}`} 
+                                    src={`https://majorproject-kr7t.onrender.com/${item.image}`} 
                                     className="card-img-top" 
                                     alt={`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} Item`} 
                                 />

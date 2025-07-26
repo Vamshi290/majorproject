@@ -13,7 +13,7 @@ const Found = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:3001/lostfound/found')
+    axios.get('https://majorproject-kr7t.onrender.com/lostfound/found')
       .then(response => {
         setFoundItems(response.data);
         setFilteredItems(response.data);
@@ -107,11 +107,11 @@ const Found = () => {
               </div>
               <div>
                 <img
-                  src={`http://127.0.0.1:3001/${item.image}`}
+                  src={`https://majorproject-kr7t.onrender.com/${item.image}`}
                   alt={item.name}
                   width="200"
                   style={{ cursor: 'pointer', transition: 'transform 0.2s ease', borderRadius: '8px', maxWidth: '100%' }}
-                  onClick={() => handleImageClick(`http://127.0.0.1:3001/${item.image}`)}
+                  onClick={() => handleImageClick(`https://majorproject-kr7t.onrender.com/${item.image}`)}
                 />
               </div>
               <button

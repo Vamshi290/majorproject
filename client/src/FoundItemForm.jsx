@@ -23,7 +23,7 @@ const FoundItemForm = () => {
     }
 
     axios
-      .post('http://127.0.0.1:3001/founditems', formData)
+      .post('https://majorproject-kr7t.onrender.com/founditems', formData)
       .then((response) => {
         console.log('Item submitted successfully:', response);
         navigate('/');

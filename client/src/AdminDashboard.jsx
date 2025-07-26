@@ -18,24 +18,24 @@ const AdminPortal = () => {
 
   const fetchItems = () => {
     axios
-      .get("http://localhost:3001/lostfound/pending")
+      .get("https://majorproject-kr7t.onrender.com/lostfound/pending")
       .then((res) => setPendingItems(res.data))
       .catch(() => setMessage("Failed to fetch pending items."));
 
     axios
-      .get("http://localhost:3001/lostfound/approved")
+      .get("https://majorproject-kr7t.onrender.com/lostfound/approved")
       .then((res) => setApprovedItems(res.data))
       .catch(() => setMessage("Failed to fetch approved items."));
 
     axios
-      .get("http://localhost:3001/lostfound/rejected")
+      .get("https://majorproject-kr7t.onrender.com/lostfound/rejected")
       .then((res) => setRejectedItems(res.data))
       .catch(() => setMessage("Failed to fetch rejected items."));
   };
 
   const handleStatusChange = (id, status) => {
     axios
-      .patch(`http://localhost:3001/lostfound/update/${id}`, { status })
+      .patch(`https://majorproject-kr7t.onrender.com/lostfound/update/${id}`, { status })
       .then(() => fetchItems())
       .catch(() => setMessage("Failed to update item status."));
   };

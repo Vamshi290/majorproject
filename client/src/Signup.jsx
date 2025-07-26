@@ -20,7 +20,7 @@ function Signup() {
         }
 
         axios
-            .post('http://127.0.0.1:3001/register', { name, email, password })
+            .post('https://majorproject-kr7t.onrender.com/register', { name, email, password })
             .then(result => {
                 console.log(result);
                 navigate('/login');

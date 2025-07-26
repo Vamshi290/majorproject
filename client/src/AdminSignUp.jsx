@@ -18,7 +18,7 @@ function AdminSignUp() {
     }
 
     try {
-      const res = await axios.post("http://localhost:3001/signup/admin", {
+      const res = await axios.post("https://majorproject-kr7t.onrender.com/signup/admin", {
         name,
         email,
         password,

@@ -16,7 +16,7 @@ function StudentLogin() {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:3001/login/student", {
+      const res = await axios.post("https://majorproject-kr7t.onrender.com/login/student", {
         email,
         password,
       });

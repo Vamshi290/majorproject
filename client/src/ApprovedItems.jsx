@@ -7,7 +7,7 @@ function ApprovedItems() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3001/lostfound/approved")
+      .get("https://majorproject-kr7t.onrender.com/lostfound/approved")
       .then((res) => setItems(res.data))
       .catch(() => setMessage("Failed to fetch approved items."));
   }, []);

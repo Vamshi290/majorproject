@@ -16,7 +16,7 @@ function ResetPassword() {
             return;
         }
         try {
-            await axios.post("http://127.0.0.1:3001/reset-password", { token, newPassword });
+            await axios.post("https://majorproject-kr7t.onrender.com/reset-password", { token, newPassword });
             setMessage("Password updated successfully. Redirecting to login...");
             setTimeout(() => navigate("/login"), 3000);
         } catch (error) {

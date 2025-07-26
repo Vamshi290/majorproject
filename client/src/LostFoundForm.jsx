@@ -24,7 +24,7 @@ function LostFoundForm() {
     if (image) formData.append('image', image);
 
     try {
-      const response = await axios.post('http://127.0.0.1:3001/lostfound', formData, {
+      const response = await axios.post('https://majorproject-kr7t.onrender.com/lostfound', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log('Item submitted successfully:', response.data);

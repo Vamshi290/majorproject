@@ -8,7 +8,7 @@ function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://127.0.0.1:3001/forgot-password", { email });
+      await axios.post("https://majorproject-kr7t.onrender.com/forgot-password", { email });
       setMessage("Password reset link sent to your email!");
     } catch (error) {
       setMessage(error.response?.data?.message || "Something went wrong. Please try again.");

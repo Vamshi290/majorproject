@@ -7,8 +7,8 @@ const Result = () => {
   useEffect(() => {
     // Fetch both found and lost items from backend
     Promise.all([
-      axios.get("http://localhost:3001/founditems"), // Found Items API
-      axios.get("http://localhost:3001/lostitems"),  // Lost Items API
+      axios.get("https://majorproject-kr7t.onrender.com/founditems"), // Found Items API
+      axios.get("https://majorproject-kr7t.onrender.com/lostitems"),  // Lost Items API
     ])
       .then(([foundResponse, lostResponse]) => {
         const combinedItems = [...foundResponse.data, ...lostResponse.data];
