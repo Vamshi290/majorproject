@@ -90,8 +90,8 @@ router.post('/signup/admin', async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const adminExists = await Admin.findOne({ email });
     const studentExists = await Student.findOne({ email });
+    const adminExists = await Admin.findOne({ username: email });
 
     if (adminExists || studentExists) {
       return res.status(400).json({ message: 'Email already exists' });
